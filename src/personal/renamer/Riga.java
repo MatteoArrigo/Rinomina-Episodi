@@ -16,6 +16,7 @@ public class Riga {
 	private String titolo;
 	
 	private boolean rigaTitolo;
+	private boolean titoloTrovato = true;
 	
 	private Hashtable<Integer, Integer> colonnaTitolo;
 
@@ -36,7 +37,15 @@ public class Riga {
 	}
 	
 	public boolean isRigaTitolo() {
-		return rigaTitolo;
+		return this.rigaTitolo;
+	}
+	
+	public boolean isTitoloTrovato() {
+		return this.titoloTrovato;
+	}
+	
+	public void setTitoloTrovato(boolean b) {
+		this.titoloTrovato = b;
 	}
 	
 	public int getNumeroEpisodio() {
@@ -89,18 +98,19 @@ public class Riga {
 				try{
 					return Integer.parseInt(numero);
 				}catch(Exception e) {
+					titoloTrovato = false;
 					throw new StringNotFoundException();
 				}
-			}else
-				throw new StringNotFoundException();
-		} else
-			throw new StringNotFoundException();
+			}
+		}
+		titoloTrovato = false;
+		throw new StringNotFoundException();
 	}
 	
 	public String ricavaTitolo() throws StringNotFoundException
 	{
 		int nColonna = 0;
-		Matcher inizioCella = Pattern.compile("<td>").matcher(riga);
+		Matcher inizioCella = Pattern.compile("<td").matcher(riga);
 		Matcher fineCella = Pattern.compile("<\\/td>").matcher(riga);
 		Pattern patternTitolo = Pattern.compile(">[^ ][^<>]+<");
 		while(inizioCella.find() && fineCella.find()) {
@@ -119,16 +129,15 @@ public class Riga {
 						String parola = st.nextToken();
 						titolo += parola.substring(0, 1).toUpperCase() + parola.substring(1, parola.length()).toLowerCase() + " ";
 					}
-					try {
 					return titolo.substring(0, titolo.length()-1);
-					}catch(Exception e) {
-						String s = "3";
-					}
-				}else
+				}else {
+					titoloTrovato = false;
 					throw new StringNotFoundException();
+				}
 			}
 		}
 		//Se è uscito dal while, qualcosa è andato storto
+		titoloTrovato = false;
 		throw new StringNotFoundException();
 		
 	}

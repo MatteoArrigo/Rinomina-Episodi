@@ -10,7 +10,7 @@ public class MieSerie {
 //	public static final File serie_dir = new File("E:\\Serie Tv\\Serie Tv Supereroi");
 	public static final File serie_dir = new File("C:\\Users\\Matteo\\eclipse-workspace\\Rinomina Episodi\\src\\personal\\renamer\\Prova");
 	public static final File fileReport = new File(serie_dir.getAbsolutePath() + "\\Report.txt"); //report principale
-	public static final String regexReport = "Report[_[\\d]+]*";
+	public static final String regexReport = "Report(_\\d+)?.txt";
 	public static final String URLSFILE = "URLs.txt";
 	
 	public static final int IT = 0;

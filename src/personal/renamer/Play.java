@@ -1,7 +1,9 @@
 package personal.renamer;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import personal.renamer.parts.*;
 
@@ -15,7 +17,8 @@ public class Play {
 	 * -controllare codice commentato nel main
 	 * - pensare meglioa come integrare Titolo con Episodio e SottotitoliDir
 	 * - ultime due estensioni di MieSerie da rivedere
-	 * - da rivedere findURL() in stagione
+	 * - fare un metodo in titolo che controlli i caratteri non ammessi su i nomi dei file in windows
+	 * - implementare la sovrascrittura di report o la creazione di un nuovo report e fare un commit e push
 	 */
 	
 	public static void main(String[] args) {
@@ -112,6 +115,51 @@ public class Play {
 			System.exit(0);
 		}
 		
-		System.out.println("\n\n\n\nProgramma terminato con successo");
+		System.out.println("\n\n\nRinominazione terminata con successo.");
+		int comando = -1;
+		String line="";
+		System.out.print("Vuoi salvare il report dei cambiamenti? (0=No, 1=Si): ");
+		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
+		do{
+			try {
+				line = br.readLine();
+				comando = Integer.parseInt(line);
+			}catch(NumberFormatException e) {
+				System.out.println("Scrivi un numero!");
+			}catch(IOException e) {
+				e.printStackTrace();
+			}
+		}while(comando != 0 && comando != 1);
+		if(comando == 1) {
+			//salvo il report, chiedendo se sovrascrivere Report.txt o salvarlo su Report_/d.txt
+			try{
+				if(!report.getReport().getName().equals("Report.txt")) {
+					System.out.print("Sovrascrivere il file Report.txt? (0=No, 1=Si): ");
+					do{
+						try {
+							line = br.readLine();
+							comando = Integer.parseInt(line);
+						}catch(NumberFormatException e) {
+							System.out.println("Scrivi un numero!");
+						}catch(IOException e) {
+							e.printStackTrace();
+						}
+					}while(comando != 0 && comando != 1);
+					if(comando == 1) {
+						report.sovrascriviReport();
+						report.closeStream();
+					}
+					else
+						report.closeStream();
+				}else
+					report.closeStream();
+			}catch(IOException e) {
+				e.printStackTrace();
+			}
+		}else if(comando == 0){
+			report.deleteReport();
+		}
+		
+		System.out.println("\nProgramma terminato con successo.");		
 	}
 }

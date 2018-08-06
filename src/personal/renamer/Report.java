@@ -8,6 +8,7 @@ import java.util.*;
 public class Report {
 	
 	private File report = null;
+
 	private static final int LUN_NOME = 65;
 	private BufferedWriter output;
 	
@@ -25,6 +26,10 @@ public class Report {
 			e.printStackTrace();
 			System.exit(0);
 		}	
+	}
+	
+	public File getReport() {
+		return report;
 	}
 	
 	private void createFile() throws IOException {
@@ -59,9 +64,15 @@ public class Report {
 			else
 				return 1;
 		});
-		String nomeReport = MieSerie.fileReport.getName();
-		report = new File(nomeReport.substring(0, nomeReport.length()-4) + "_" + numeri.get(0) + ".txt");
+		String nomeReport = MieSerie.fileReport.getAbsolutePath();
+		report = new File(nomeReport.substring(0, nomeReport.length()-4) + "_" + (numeri.get(0)+1) + ".txt");
 		report.createNewFile();
+	}
+	
+	public void sovrascriviReport() {
+		if(MieSerie.fileReport.exists())
+			MieSerie.fileReport.delete();
+		report.renameTo(MieSerie.fileReport);
 	}
 	
 	public void closeStream() throws IOException
@@ -136,10 +147,16 @@ public class Report {
 			}
 			if(subt instanceof SottotitoliFile)
 				output.write("\t");
+			else if(subt instanceof SottotitoliDir)
+				output.write("Sottotitoli: ");
 			output.write(nome.toString());
 		} catch(IOException e) {
 			e.printStackTrace();
 			System.exit(0);
 		}
+	}
+
+	public void deleteReport() {
+		report.delete();
 	}
 }

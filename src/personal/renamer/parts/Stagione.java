@@ -6,6 +6,7 @@ import personal.renamer.exceptions.*;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownServiceException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.*;
@@ -118,15 +119,12 @@ public class Stagione {
 		}catch(IOException e) {
 			System.out.println("Non è stato possibile scaricare la pagina wikipedia di " + toString());
 			gotMapTitoli = false;
-			return new HashMap<Integer, String>();
+			return null;
 		}
 		
 		
-		String tabella = HTMLText.substring(HTMLText.indexOf("<table"), HTMLText.indexOf("</table>"));
-		if(tabella.indexOf("<th>n") == -1) {
-			HTMLText = HTMLText.substring(HTMLText.indexOf("</table>")+9);
-			tabella = HTMLText.substring(HTMLText.indexOf("<table"), HTMLText.indexOf("</table>"));
-		}
+		String tabella = ricavaTable(HTMLText);
+		int titoliNonTrovati = 0;
 		Matcher inizioRiga = Pattern.compile("<tr>\n").matcher(tabella);
 		Matcher fineRiga = Pattern.compile("<\\/tr>").matcher(tabella);
 		while(inizioRiga.find()){			
@@ -136,22 +134,32 @@ public class Stagione {
 			try {
 			riga = new Riga(tabella.substring(inizioRiga.end(), fineRiga.start()), lingua);
 			}catch(StringNotFoundException e) {
-				System.out.println("Non sono stati trovati i titoli degli episodi");
-				gotMapTitoli = false;
-				return new HashMap<Integer, String>();
+				titoliNonTrovati++;
+				continue;
 			}
 			if(riga.isRigaTitolo())
 				titoli.put(riga.getNumeroEpisodio(), riga.getTitolo());
 		}
 		
-		if(titoli.size() <= 0)
-		{
+		if(titoli.size() <= 0){
 			gotMapTitoli = false;
-			return new HashMap<Integer, String>();
+			return null;
+		}
+		if(titoliNonTrovati>=1) {
+			System.out.format("Non sono stati trovati i titolo di %d episodi", titoliNonTrovati);
 		}
 		
 		return titoli;
 		
+	}
+	
+	private String ricavaTable(String HTMLText) {
+		String tabella = HTMLText.substring(HTMLText.indexOf("<table"), HTMLText.indexOf("</table>"));
+		if(tabella.indexOf("<th>n") == -1) {
+			tabella = ricavaTable(HTMLText.substring(HTMLText.indexOf("</table>")+9));
+		}
+		
+		return tabella;
 	}
 
 	private String ricavaHTMLText() throws URLNotFoundException, IOException
@@ -178,9 +186,7 @@ public class Stagione {
 		}
 	
 		try {
-			URL url = new URL(link);
-			URLConnection uc = url.openConnection();
-			br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
+			br = (BufferedReader)tryConnection(link);
 		}catch(Exception e) {
 			throw new URLNotFoundException();
 		}
@@ -188,6 +194,9 @@ public class Stagione {
 		String line = "";
 		while( (line=br.readLine()) != null)
 			HTMLText += line + "\n";
+		
+		if(HTMLText.indexOf("<table") == -1)
+			throw new URLNotFoundException();
 		
 		return HTMLText;
 		
@@ -225,48 +234,46 @@ public class Stagione {
 		while(st.hasMoreTokens()){
 			String parola = st.nextToken();
 			parola = parola.substring(0, 1).toUpperCase() + parola.substring(1, parola.length());
+			if(parola.equals("Of"))
+				parola = parola.toLowerCase();
 			link += parola + "_";
 		}
 		link += String.format("(%s_stagione)", numeriOrdinali.get(numeroStagione)); //link possibile
 		
 		String HTMLText = "";
 		try { //da rivedere
-			URL url = new URL(link);
-			URLConnection uc = url.openConnection();
-			BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
-
-			String line = "";
-			while( (line=br.readLine()) != null)
-				HTMLText += line + "\n";
+			tryConnection(link);
 		}catch(Exception e) {
 			if(numeroStagione == 1) {
-				link = "https://it.wikipedia.org/wiki/Episodi_di";
-				StringTokenizer st1 = new StringTokenizer(serie.getNomeSerie());
-				while(st1.hasMoreTokens()){
-					String parola = st1.nextToken();
-					parola = parola.substring(0, 1).toUpperCase() + parola.substring(1, parola.length());
-					link += "_" + parola;
-				}
+				//devo levare dal link _(prima_stagione) (17 caratteri)
+				link = link.substring(0, link.length()-17);
 				try {
-					URL url = new URL(link);
-					URLConnection uc = url.openConnection();
-					BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
-
-					String line = "";
-					while( (line=br.readLine()) != null)
-						HTMLText += line + "\n";
+					tryConnection(link);
 				}catch(Exception e1) {
+					System.out.println(link);
 					throw new URLNotFoundException();
 				}
+				printURL(link);
+				return link;
 			}
+			System.out.println(link);
 			throw new URLNotFoundException();
 		}
-		if(HTMLText.indexOf("<table") == -1)
-				throw new URLNotFoundException();
-
+		//se passa il try-catch dovrebbe aver trovato l'url
+		printURL(link);
+		return link;		
+	}
+	
+	private Reader tryConnection(String link) throws IOException, UnknownServiceException {
+		URL url = new URL(link);
+		URLConnection uc = url.openConnection();
+		BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
 		
-		//se passa il try-catch non dovrebbe aver trovato l'url
-		
+		//Se arriva qua, il link esiste
+		return br;
+	}
+	
+	private void printURL(String link) {
 		try {
 			File fileURLsTemp = new File(serie.getFileSerie().getAbsolutePath() + "\\" + MieSerie.URLSFILE);
 			if(!fileURLsTemp.exists())
@@ -278,7 +285,6 @@ public class Stagione {
 		}catch(Exception e) {
 			System.out.println("Impossibile aggiungere l'url di " + toString());
 		}
-		
-		return link;		
+
 	}
 }

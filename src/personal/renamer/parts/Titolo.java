@@ -273,7 +273,8 @@ public class Titolo {
 			element = element.substring(0, 1).toUpperCase() + element.substring(1).toLowerCase(); //altrimenti rende la prima lettera grande
 			titoloFinale += element + " ";
 		}
-	
+		
+		System.out.println("Questo titolo è stato trovato con il metodo ricava titolo, non con Wikipedia");
 		return titoloFinale.trim();
 		
 	}
@@ -332,9 +333,10 @@ public class Titolo {
 	
 	
 	private String matchTitoloMap() {
-		
-		return stagione.getMapTitoli().get(numeroEpisodio);
-		
+		if(stagione.getMapTitoli().containsKey(numeroEpisodio))
+				return stagione.getMapTitoli().get(numeroEpisodio);
+		else
+			return ricavaTitolo();
 	}
 	
 }

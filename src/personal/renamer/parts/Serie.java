@@ -43,6 +43,8 @@ public class Serie {
 	
 	private String nomeSerie()
 	{
+		if(fileSerie.getName().equals("Agents Of S.H.I.E.L.D"))
+			return "Agents Of S.H.I.E.L.D.";
 		return fileSerie.getName();
 	}
 	
